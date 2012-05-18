@@ -3,12 +3,31 @@ class CustomDownloadBuilder
   def self.zip_for_files_with_ids(ids, &block)
     file_paths = DataFile.find(ids).collect(&:path)
 
+    experiment_metadata = build_experiment_metadata(ids)
+    file_paths.concat(experiment_metadata)
+
     zip_file = Tempfile.new("temp_file")
     ZipBuilder.build_zip(zip_file, file_paths)
 
     block.yield(zip_file)
     zip_file.close
     zip_file.unlink
+  end
+
+
+  def self.build_experiment_metadata(ids, &block)
+    experiment_ids = DataFile.find(ids, :select => 'DISTINCT experiment_id')
+    p "experiment ids: #{experiment_ids}"
+    exps = Experiment.find(experiment_ids)
+    metadata_files = [];
+    exps.each do |exp|
+      file_path = exp.write_metadata_to_file(Rails.root.to_s + '/tmp/')
+      metadata_files << file_path
+    end
+    metadata_files
+  end
+
+  def self.build_facility_metadata(ids, &block)
   end
 
   def self.subsetted_zip_for_files(files, date_range, from_date_string, to_date_string, &block)

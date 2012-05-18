@@ -1,4 +1,5 @@
 class Experiment < ActiveRecord::Base
+  #include ActionView::Helpers::TextHelper
 
   belongs_to :facility
   belongs_to :parent_experiment, :class_name => "Experiment"
@@ -54,13 +55,38 @@ class Experiment < ActiveRecord::Base
   def write_metadata_to_file(directory_path)
     file_path = File.join(directory_path, "#{name.parameterize}.txt")
     File.open(file_path, 'w') do |file|
-      file.puts "Parent: #{parent_name}"
-      file.puts "Name: #{name}"
-      file.puts "Description: #{description}"
-      file.puts "Start date: #{start_date.to_s(:date_only)}"
-      file.puts "End date: #{end_date.to_s(:date_only)}"
-      file.puts "Subject: #{subject}"
+      format_metadata(file)
     end
     file_path
+  end
+
+  def format_metadata(file)
+    f_d = word_wrap(description.to_s)
+    file.puts "Parent: \t#{parent_name}\r\n"
+    file.puts "Name: \t\t#{name}\r\n"
+    file.puts "Description: \t#{f_d}\r\n"
+    if !start_date.nil?
+      file.puts("Start date: \t#{start_date.to_s(:date_only)}\r\n")
+    else
+      file.puts("Start date: \r\n")
+    end
+    if !end_date.nil?
+      file.puts("End date: \t#{end_date.to_s(:date_only)}\r\n")
+    else
+      file.puts("End date: \r\n")
+    end
+    file.puts "Subject: \t#{subject.to_s}\r\n"
+  end
+
+  def word_wrap(text, *args)
+    options = args.extract_options!
+    unless args.blank?
+      options[:line_width] = args[0] || 80
+    end
+    options.reverse_merge!(:line_width => 80)
+
+    text.split("\r").collect do |line|
+      line.length > options[:line_width] ? line.gsub(/(.{1,#{options[:line_width]}})(\s+|$)/, "\\1\r\n\t\t").strip : line
+    end * "\r"
   end
 end
