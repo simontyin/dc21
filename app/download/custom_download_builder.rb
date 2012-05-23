@@ -2,9 +2,7 @@ class CustomDownloadBuilder
 
   def self.zip_for_files_with_ids(ids, &block)
     file_paths = DataFile.find(ids).collect(&:path)
-
-    experiment_metadata = build_experiment_metadata(ids)
-    file_paths.concat(experiment_metadata)
+    file_paths.concat(build_metadata(ids))
 
     zip_file = Tempfile.new("temp_file")
     ZipBuilder.build_zip(zip_file, file_paths)
@@ -14,20 +12,40 @@ class CustomDownloadBuilder
     zip_file.unlink
   end
 
+  def self.build_metadata(ids)
+    filepath = []
+    datafiles = DataFile.find(ids, :select => 'DISTINCT experiment_id')
+    experiment_metadata_path = build_experiment_metadata(datafiles)
 
-  def self.build_experiment_metadata(ids, &block)
-    experiment_ids = DataFile.find(ids, :select => 'DISTINCT experiment_id')
-    p "experiment ids: #{experiment_ids}"
-    exps = Experiment.find(experiment_ids)
-    metadata_files = [];
-    exps.each do |exp|
+    experiments = []
+    datafiles.each do |df|
+      experiments << Experiment.find(df.experiment_id)
+    end
+
+    facility_metadata_path = build_facility_metadata(experiments)
+    filepath.concat(experiment_metadata_path)
+    filepath.concat(facility_metadata_path)
+    return filepath
+  end
+
+  def self.build_experiment_metadata(datafiles, &block)
+    metadata_files = []
+    datafiles.each do |df|
+      exp = Experiment.find(df.experiment_id)
       file_path = exp.write_metadata_to_file(Rails.root.to_s + '/tmp/')
       metadata_files << file_path
     end
     metadata_files
   end
 
-  def self.build_facility_metadata(ids, &block)
+  def self.build_facility_metadata(experiments, &block)
+    metadata_files = []
+    experiments.each do |exp|
+      fc = Facility.find(exp.facility_id)
+        file_path = fc.write_metadata_to_file(Rails.root.to_s + '/tmp')
+      metadata_files << file_path
+    end
+    metadata_files
   end
 
   def self.subsetted_zip_for_files(files, date_range, from_date_string, to_date_string, &block)

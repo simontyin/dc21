@@ -105,6 +105,36 @@ class Facility < ActiveRecord::Base
     points
   end
 
+  def write_metadata_to_file(directory_path)
+    #ExperimentForCode.find_all_by_experiment_id(ids)
+    file_path = File.join(directory_path, "#{code.parameterize}.txt")
+    File.open(file_path, 'w') do |file|
+      format_metadata(file)
+    end
+    file_path
+  end
+
+  def format_metadata(file)
+    f_d = word_wrap(description.to_s)
+    file.puts "Name: \t\t#{name}\r\n"
+    file.puts "Code: \t\t#{code}\r\n"
+    file.puts "Description: \t#{f_d}\r\n"
+    file.puts "Location: \t#{location}\r\n"
+    file.puts "Primary Contact: \t #{primary_contact.full_name} (#{primary_contact.email})\r\n"
+  end
+
+  def word_wrap(text, *args)
+    options = args.extract_options!
+    unless args.blank?
+      options[:line_width] = args[0] || 80
+    end
+    options.reverse_merge!(:line_width => 80)
+
+    text.split("\r").collect do |line|
+      line.length > options[:line_width] ? line.gsub(/(.{1,#{options[:line_width]}})(\s+|$)/, "\\1\r\n\t\t").strip : line
+    end * "\r"
+  end
+
   private
 
   def remove_white_spaces

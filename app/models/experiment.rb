@@ -53,6 +53,7 @@ class Experiment < ActiveRecord::Base
   end
 
   def write_metadata_to_file(directory_path)
+    #ExperimentForCode.find_all_by_experiment_id(ids)
     file_path = File.join(directory_path, "#{name.parameterize}.txt")
     File.open(file_path, 'w') do |file|
       format_metadata(file)
