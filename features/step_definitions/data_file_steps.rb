@@ -1,6 +1,9 @@
 Given /^I have data files$/ do |table|
   table.hashes.each do |attributes|
     email = attributes.delete('uploaded_by')
+    if attributes['format'] == ''
+      attributes['format'] = nil
+    end
     if attributes['file_processing_status'] == ''
       attributes['file_processing_status'] = nil
     end
@@ -163,6 +166,16 @@ end
 When /^I select "([^"]*)" from the select box for "([^"]*)"$/ do |option, filename|
   file = DataFile.find_by_filename(filename)
   field = "data_files_#{file.id}_file_processing_status"
+  select(option, :from => field)
+end
+
+When /^I edit the File Type to "([^"]*)"$/ do |option|
+  field = "data_file_file_processing_status"
+  select(option, :from => field)
+end
+
+When /^I edit the Experiment to "([^"]*)"$/ do |option|
+  field = "data_file_experiment_id"
   select(option, :from => field)
 end
 

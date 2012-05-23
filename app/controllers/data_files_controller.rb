@@ -38,8 +38,7 @@ class DataFilesController < ApplicationController
   end
 
   def update
-    tags = params[:tags]
-    @data_file.tag_ids = tags
+    @data_file.tag_ids = params[:tags]
 
     if !params[:date].nil?
       attrs = params.delete(:date)
