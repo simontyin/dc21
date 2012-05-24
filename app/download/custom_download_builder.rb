@@ -14,7 +14,8 @@ class CustomDownloadBuilder
 
   def self.build_metadata(ids)
     filepath = []
-    datafiles = DataFile.find(ids, :select => 'DISTINCT experiment_id')
+    datafiles = DataFile.find_all_by_id(ids, :select => 'DISTINCT experiment_id')
+    file_metadata_path = build_file_metadata(ids)
     experiment_metadata_path = build_experiment_metadata(datafiles)
 
     experiments = []
@@ -23,6 +24,7 @@ class CustomDownloadBuilder
     end
 
     facility_metadata_path = build_facility_metadata(experiments)
+    filepath.concat(file_metadata_path)
     filepath.concat(experiment_metadata_path)
     filepath.concat(facility_metadata_path)
     return filepath
@@ -42,7 +44,17 @@ class CustomDownloadBuilder
     metadata_files = []
     experiments.each do |exp|
       fc = Facility.find(exp.facility_id)
-        file_path = fc.write_metadata_to_file(Rails.root.to_s + '/tmp')
+      file_path = fc.write_metadata_to_file(Rails.root.to_s + '/tmp/')
+      metadata_files << file_path
+    end
+    metadata_files
+  end
+
+  def self.build_file_metadata(ids, &block)
+    metadata_files = []
+    ids.each do |id|
+      datafile = DataFile.find_by_id(id)
+      file_path = datafile.write_metadata_to_file(Rails.root.to_s + '/tmp/')
       metadata_files << file_path
     end
     metadata_files

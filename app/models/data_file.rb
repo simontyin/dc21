@@ -210,6 +210,54 @@ class DataFile < ActiveRecord::Base
     save!
   end
 
+  def write_metadata_to_file(directory_path)
+    file_path = File.join(directory_path, "#{format_filename_to_metadata(filename)}")
+    File.open(file_path, 'w') do |file|
+      format_metadata(file)
+    end
+    file_path
+  end
+
+  def format_filename_to_metadata(filename)
+    fn = filename.split(".")
+    "#{fn.first}-metadata.txt"
+  end
+
+  def format_metadata(file)
+    f_description = word_wrap(file_processing_description)
+    f_tags = []
+    tags.map { |tag| f_tags << tag.name } if !tags.blank?
+
+    file.puts "Name: \t\t#{filename}\r\n"
+    file.puts "Type: \t\t#{file_processing_status}\r\n"
+    file.puts "File Format: \t\t#{format}\r\n"
+    file.puts "Description: \t#{f_description}\r\n"
+    file.puts "Tags: \t\t#{f_tags.join(", ")}\r\n"
+    file.puts "Experiment: \t\t#{experiment_name}\r\n"
+    file.puts "Date added: \t\t#{created_at}\r\n"
+    file.puts "Added by: \t\t#{created_by.email}\r\n"
+
+    if self.format.eql? FileTypeDeterminer::TOA5
+      file.puts "\r\nInformation From the File\r\n\r\n"
+      metadata_items.each do |item|
+        key = "#{item.key}".capitalize.gsub("_", " ")
+        file.puts "#{key}: \t\t#{item.value}\r\n"
+      end
+    end
+  end
+
+  def word_wrap(text, *args)
+    options = args.extract_options!
+    unless args.blank?
+      options[:line_width] = args[0] || 80
+    end
+    options.reverse_merge!(:line_width => 80)
+
+    text.split("\r").collect do |line|
+      line.length > options[:line_width] ? line.gsub(/(.{1,#{options[:line_width]}})(\s+|$)/, "\\1\r\n\t\t").strip : line
+    end * "\r"
+  end
+
   protected
 
   def with_filtered_data_in_date_range_in_temp_file(from_time, to_time, &block)
