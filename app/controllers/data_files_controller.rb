@@ -31,19 +31,15 @@ class DataFilesController < ApplicationController
 
   def fast_search
     set_tab :explore, :contentnavigation
-    #do_search(params[:search])
-    #@data_files_paginated = @data_files.paginate(page: params[:page])
-    p "Per page @ :#{WillPaginate.per_page}"
-    @q = DataFile.limit(WillPaginate.per_page).search(params[:q])
-    puts @q.result.size
-    @data_files = @q.result(:distinct => true).paginate(:page => params[:page])
-  end
+    if params[:q]
+      @q = DataFile.limit(WillPaginate.per_page).search(params[:q])
+      @data_files = @q.result(:distinct => true).paginate(:page => params[:page])
+    else
+      sql = "SELECT * FROM data_files"
+      @q = DataFile.search(params[:q])
+      @data_files = DataFile.paginate_by_sql(sql, :page => params[:page])
+    end
 
-  def exec_search
-    set_tab :explore, :contentnavigation
-    #@data_files_paginated = []
-    @q = DataFile.search(params[:q])
-    @data_files = @q.result(:distinct => true)
   end
 
   # TODO: end of refactor block
