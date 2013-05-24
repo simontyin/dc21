@@ -26,6 +26,9 @@ Dc21app::Application.routes.draw do
 
   get "/data_files/search" => "data_files#index" #to stop weird errors when visiting via get
 
+  # TODO: new impl
+  match "/data_files/fast_search" => "data_files#fast_search", :via => [:get, :post]
+  #post "/data_files/exec_search" => "data_files#exec_search"
 
   resources :users, :only => [:show] do
     collection do

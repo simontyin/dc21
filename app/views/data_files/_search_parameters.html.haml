@@ -1,0 +1,135 @@
+.leftsearch
+  .btn-group.dropdown
+
+    -# TODO: Refactor below with the return AJAX call
+    %a#drop4.btn.dropdown-toggle{"data-toggle" => "dropdown", :href => "#", :role => "button"}
+      - pg_num = params[:page].nil? ? 0 : params[:page].to_i - 1
+
+      - if @data_files.empty?
+        No matching files
+      - elsif @data_files.size == 1
+        = "Showing 1 file"
+      - elsif @data_files.size <= @data_files.per_page
+        = "Showing all #{@data_files.size} files"
+      - else
+        - if @data_files_paginated.length == 1
+          = "Showing #{@data_files.per_page * pg_num + 1} of #{@data_files.size} files"
+        - else
+          = "Showing #{@data_files.per_page * pg_num + 1}-#{@data_files.per_page * pg_num + @data_files_paginated.size} of #{@data_files.size} files"
+      %span.caret
+
+    -# TODO: Replace with ransack search
+    %ul#faceted_search.dropdown-menu.facetedsearch.search{"aria-labelledby" => "drop4", :role => "menu"}
+      .searchbox
+        = search_form_for @q, :url => data_files_fast_search_path, :html => {:method => :post} do |f|
+          =hidden_field_tag "direction", sort_direction
+          =hidden_field_tag "sort", sort_column
+          .searchcategory
+            %h4#date.expand Date:
+            .date
+              .date-format yyyy-mm-dd
+              = f.label :start_time_gteq, "From Date:"
+              = f.text_field :start_time_gteq, :datepicker => true, :size => 10, :maxlength => 10
+              = f.label :end_time_lteq, "To Date:"
+              = f.text_field :end_time_lteq, :datepicker => true, :size => 10, :maxlength => 10
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#filename_category.expand Filename:
+            .filename
+              = f.label :filename_cont, "Filename:"
+              = f.text_field :filename_cont
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#description_category.expand Description:
+            .description
+              = f.label :file_processing_description_cont, "Description:"
+              = f.text_field :file_processing_description_cont
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#file_id_category.expand File ID:
+            .file_id
+              -#= label_tag :file_id, "File ID:"
+              -#= text_field_tag "search[file_id]", @file_id, :id => :file_id
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#id_category.expand ID:
+            .id
+              = f.label :id_eq, "ID:"
+              = f.text_field :id_eq
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#type_category.expand Type:
+            .type
+              - DataFile::ALL_STATI.each_with_index do |status, index|
+                - package = status.eql?('PACKAGE')
+                .type_group
+                  - if package
+                    = link_to "+", "#", :id => "expand_package", :class => "expand_type"
+                  -#= label_tag "search_status_#{index}", status,  :class => package.eql?(true) ? :type_parent :  :type
+                  -#= check_box_tag "search[stati][]", status, @selected_stati.include?(status), :id => "search_status_#{index}",  :class => package.eql?(true) ? :type_parent : :type
+                  .type_children
+                    - if status.eql?('PACKAGE')
+                      -#= f.label tag :published_true, 'Published:', :class => :publish_title
+                      -#= f.check_box :published_true, :class => :publish
+                      -#
+                      -#.date-format yyyy-mm-dd
+                      -#= f.label :published_date_matches, 'Published Date:', :class => :publish
+                      -#= f.text_field :published_date_matches, :datepicker => true, :size => 10, :maxlength => 10, :class => :publish_date
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+
+          .searchcategory
+            %h4#tags_category.expand Tags:
+            .tags
+              - tags.each_with_index do |tag, index|
+                -#= f.label "search_tag_#{index}", tag.name
+                -#= check_box_tag "search[tags][]", tag.id, @selected_tags.include?(tag.id.to_s), :id => "search_tag_#{index}"
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#facility.expand Facility:
+            .facility
+              - facilities.each_with_index do |facility, index|
+                .facility_group
+                  -#= link_to "+", "#", :id => "expand_#{facility.name}", :class => "expand_facility"
+                  -#= label_tag "search_facility_#{index}", facility.name, :class => :facility_parent
+                  -#= check_box_tag "search[facilities][]", facility.id, @selected_facilities.include?(facility.id.to_s), :id => "search_facility_#{index}", :class => :facility_parent
+                  -#.facility_children
+                  -#  - experiments.each_with_index do |experiment, e_index|
+                  -#    - if experiment.facility_id == facility.id
+                  -#      = label_tag "search_experiment_#{index}_#{e_index}", experiment.name, :class => :experiment
+                  -#      = check_box_tag "search[experiments][]", experiment.id, @selected_experiments.include?(experiment.id.to_s), :id => "search_experiment_#{index}_#{e_index}", :class => :experiment
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#variable.expand Columns:
+            .variable
+              - variables.each_with_index do |variable_info, index|
+                .variable_group
+                  -#= link_to "+", "#", :id => "expand_#{variable_info[0].parameterize("_")}", :class => "expand_variable"
+                  -#= label_tag "search_variable_#{index}", variable_info[0], :class => :variable_parent
+                  -#= check_box_tag "search[variable_parents][]", variable_info[0], @selected_parent_variables.include?(variable_info[0]), :id => "search_variable_#{index}", :class => :variable_parent
+                  -#.variable_children
+                  -#  - variable_info[1].each_with_index do |child_variable, index2|
+                  -#    = label_tag "search_variable_#{index}_#{index2}", child_variable, :class => :variable_child
+                  -#    = check_box_tag "search[variables][]", child_variable, @selected_variables.include?(child_variable), :id => "search_variable_#{index}_#{index2}", :class => :variable_child
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#uploader.expand Added By:
+            .uploader
+              = f.label :created_by_id_eq, "Added By:"
+              = f.select :created_by_id_eq, options_from_collection_for_select(User.alphabetical_by_first_name.approved, :id, :full_name, @uploader_id), :prompt => "Please select"
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+          .searchcategory
+            %h4#upload_date.expand Date Added:
+            .upload_date
+              .date-format yyyy-mm-dd
+              = f.label :created_at_gteq, "From Date:"
+              = f.text_field :created_at_gteq, :datepicker => true, :size => 10, :maxlength => 10
+              = f.label :created_at_lteq, "To Date:"
+              = f.text_field :created_at_lteq, :datepicker => true, :size => 10, :maxlength => 10
+              .actions= f.submit "Update Search Results", :class => "btn btn-primary"
+
+
+-#- if @data_files.empty? || !@search.showing_all?
+-#  .clearresults
+-#    = link_to "Clear Search", clear_data_files_path, class: "btn pull-left clearsearch"
+-#  .datacontroll
+-#    #searched_attrs= "Searching by: #{@search.searched_attributes}"

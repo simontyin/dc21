@@ -2,7 +2,15 @@ require File.dirname(__FILE__) + '/db_backup.rb'
 require 'fileutils'
 
 begin  
-  namespace :db do  
+  namespace :db do
+
+    desc "Performance test"
+    task :performance_test => :environment do
+      500.times do |i|
+        create_data_file("sample1.txt", "georgina@intersect.org.au")
+        p i
+      end
+    end
 
     desc "Backup the database"
     task :backup => :environment do  
