@@ -6,6 +6,7 @@ class DataFile < ActiveRecord::Base
   STATUS_RAW = 'RAW'
   STATUS_ERROR = 'ERROR'
   STATUS_PACKAGE = 'PACKAGE'
+
   # stati for selection when uploading
   STATI = [STATUS_RAW] + APP_CONFIG['file_types']
   # cannot change to 'RAW' or 'ERROR' during editing

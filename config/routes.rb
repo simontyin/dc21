@@ -25,7 +25,7 @@ Dc21app::Application.routes.draw do
   end
 
   get "/data_files/search" => "data_files#index" #to stop weird errors when visiting via get
-
+  get "/column_mappings/render_field" => "column_mappings#render_field"
 
   resources :users, :only => [:show] do
     collection do
@@ -88,6 +88,8 @@ Dc21app::Application.routes.draw do
   end
 
   root :to => "pages#home"
+
+  mount Resque::Server, :at => "/resque"
 
   # The priority is based upon order of creation:
   # first created -> highest priority.

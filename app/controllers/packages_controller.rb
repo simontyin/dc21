@@ -1,6 +1,6 @@
 require File.expand_path('../../../lib/exceptions/template_error.rb', __FILE__)
 class PackagesController < DataFilesController
-  
+
   def new
     if current_user.cart_items.empty?
 
@@ -18,14 +18,15 @@ class PackagesController < DataFilesController
 
   def create
     @package = Package.create_package(params, current_user)
+
     if @package.save
       data_file_ids = current_user.cart_item_ids
       begin
-        CustomDownloadBuilder.bagit_for_files_with_ids(data_file_ids, @package) do |zip_file|
-          attachment_builder = AttachmentBuilder.new(APP_CONFIG['files_root'], current_user, FileTypeDeterminer.new, MetadataExtractor.new)
-          package = attachment_builder.build_package(@package, zip_file)
-          build_rif_cs(package) unless package.nil?
-        end
+        # Resque.enqueue(PackageWorker, @package.id, data_file_ids, current_user.id)
+        # Persist the job id in the db - we need to retrieve it per record basis
+        @package.uuid = PackageWorker.create({:package_id => @package.id, :data_file_ids => data_file_ids, :user_id => current_user.id})
+        @package.save
+
         redirect_to data_file_path(@package), notice: 'Package was successfully created.'
       rescue ::TemplateError => e
         logger.error e.message
@@ -57,22 +58,6 @@ class PackagesController < DataFilesController
     end
 
     redirect_to data_files_path, :notice => valid ? "Package has been successfully submitted for publishing." : "Unable to publish package."
-  end
-
-  def build_rif_cs(files)
-    #build the rif-cs and place in the unpublished_rif_cs folder, where it will stay until published in DC21
-    dir = APP_CONFIG['unpublished_rif_cs_directory']
-    Dir.mkdir(dir) unless Dir.exists?(dir)
-    output_location = File.join(dir, "rif-cs-#{@package.id}.xml")
-
-    file = File.new(output_location, 'w')
-
-    options = {:root_url => root_url,
-               :collection_url => data_file_path(@package),
-               :zip_url => download_data_file_url(@package),
-               :submitter => current_user}
-    RifCsGenerator.new(PackageRifCsWrapper.new(@package, files, options), file).build_rif_cs
-    file.close
   end
 
   def publish_rif_cs
