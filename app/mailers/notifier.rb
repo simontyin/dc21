@@ -42,7 +42,7 @@ class Notifier < ActionMailer::Base
     mail( :to => @user.email,
           :from => APP_CONFIG['notification_email_sender'],
           :reply_to => APP_CONFIG['notification_email_sender'],
-          :subject => PREFIX + "Reset password instructions")
+          :subject => PREFIX + "Package completed")
   end
 
 end

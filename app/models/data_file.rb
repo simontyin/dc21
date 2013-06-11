@@ -8,6 +8,7 @@ class DataFile < ActiveRecord::Base
   STATUS_PACKAGE = 'PACKAGE'
 
   PACKAGE_COMPLETE = 'COMPLETE'
+  PACKAGE_NONE = 'NONE'
 
   # stati for selection when uploading
   STATI = [STATUS_RAW] + APP_CONFIG['file_types']
@@ -82,11 +83,11 @@ class DataFile < ActiveRecord::Base
   end
 
   def is_complete?
-    transfer_status.eql? "COMPLETE"
+    transfer_status.eql? PACKAGE_COMPLETE
   end
 
   def normally_packaged?
-    transfer_status.eql? "NONE"
+    transfer_status.eql? PACKAGE_NONE
   end
 
   def mark_as_complete
