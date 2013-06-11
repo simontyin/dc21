@@ -16,22 +16,18 @@ class PackageWorker
 
     job = Resque::Plugins::Status::Hash.get(pkg.uuid)
     pkg.transfer_status = job.status.to_s.upcase
-    pkg.save!
+    pkg.save
 
-    begin
-      bagit_for_files_with_ids(data_file_ids, pkg) do |zip_file|
-        attachment_builder = AttachmentBuilder.new(APP_CONFIG['files_root'], user, FileTypeDeterminer.new, MetadataExtractor.new)
-        files = attachment_builder.build_package(pkg, zip_file)
-        build_rif_cs(files, pkg, user) unless files.nil?
-      end
-
-      # Since the parent of the action can't update it
-      pkg.transfer_status = PACKAGE_COMPLETE
-      pkg.save!
-    rescue
-      pkg.transfer_status = job.status.to_s.upcase
-      pkg.save!
+    bagit_for_files_with_ids(data_file_ids, pkg) do |zip_file|
+      attachment_builder = AttachmentBuilder.new(APP_CONFIG['files_root'], user, FileTypeDeterminer.new, MetadataExtractor.new)
+      files = attachment_builder.build_package(pkg, zip_file)
+      build_rif_cs(files, pkg, user) unless files.nil?
     end
+
+    # Since the parent of the action can't update it
+    pkg.mark_as_complete
+    # Send email indicating its complete
+    Notifier.notify_user_of_completed_package(pkg).deliver
   end
 
   private

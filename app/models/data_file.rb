@@ -7,6 +7,8 @@ class DataFile < ActiveRecord::Base
   STATUS_ERROR = 'ERROR'
   STATUS_PACKAGE = 'PACKAGE'
 
+  PACKAGE_COMPLETE = 'COMPLETE'
+
   # stati for selection when uploading
   STATI = [STATUS_RAW] + APP_CONFIG['file_types']
   # cannot change to 'RAW' or 'ERROR' during editing
@@ -77,6 +79,19 @@ class DataFile < ActiveRecord::Base
 
   def is_published?
     published | false
+  end
+
+  def is_complete?
+    transfer_status.eql? "COMPLETE"
+  end
+
+  def normally_packaged?
+    transfer_status.eql? "NONE"
+  end
+
+  def mark_as_complete
+    self.transfer_status = PACKAGE_COMPLETE
+    self.save!
   end
 
   def self.with_data_in_range(from, to)

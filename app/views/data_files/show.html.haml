@@ -39,9 +39,10 @@
     = render_field "Facility", @data_file.facility_name
     = render_field "Date added", @data_file.created_at.to_s(:with_time)
 
+    - unless @data_file.normally_packaged?
+      = render_field "Creation status", @data_file.transfer_status
     - job = Resque::Plugins::Status::Hash.get(@data_file.uuid) if @data_file.uuid.present?
     - if job.present?
-      = render_field "Creation status", job.status.to_s.upcase
       - if job.working?
         = render_field "Packaging progress", "#{job.pct_complete}%"
 

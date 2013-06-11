@@ -19,6 +19,12 @@ class PackagesController < DataFilesController
   def create
     @package = Package.create_package(params, current_user)
 
+    if params[:run_in_background]
+      @package.transfer_status = "QUEUED"
+    else
+      @package.transfer_status = "NONE"
+    end
+
     if @package.save
       data_file_ids = current_user.cart_item_ids
       begin
@@ -26,8 +32,6 @@ class PackagesController < DataFilesController
         if params[:run_in_background]
           # Persist the job id in the db - we need to retrieve it per record basis
           @package.uuid = PackageWorker.create({:package_id => @package.id, :data_file_ids => data_file_ids, :user_id => current_user.id})
-          job = Resque::Plugins::Status::Hash.get(@package.uuid)
-          @package.transfer_status = job.status.to_s.upcase
           @package.save
           redirect_to data_file_path(@package), notice: 'Package is now queued for processing in the background.'
         else

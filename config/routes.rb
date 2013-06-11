@@ -89,7 +89,13 @@ Dc21app::Application.routes.draw do
 
   root :to => "pages#home"
 
-  mount Resque::Server, :at => "/resque"
+  resque_constraint = lambda do |request|
+    request.env['warden'].authenticate? and request.env['warden'].user.is_admin?
+  end
+
+  constraints resque_constraint do
+    mount Resque::Server, :at => "/resque"
+  end
 
   # The priority is based upon order of creation:
   # first created -> highest priority.
