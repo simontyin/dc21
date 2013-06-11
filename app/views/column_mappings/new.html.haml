@@ -8,29 +8,13 @@
       %tr
         %th Code
         %th Name
-      %tr.indexer{:index => 0}
-        %td= text_field "column_mappings[0]", :code, :size => '20', :maxlength => '255'
-        %td= select_tag "column_mappings[0][name]", options_for_select(APP_CONFIG['column_mappings'].sort { |a,b| a.downcase <=> b.downcase }), :include_blank => true
-    %a.btn.btn-primary{:id => "addColumnMapping"} Add
+      - @column_mappings.each_with_index do |mapping, index|
+        %tr
+          %td= text_field "column_mappings[#{index}]", :code, :value => @column_mappings[index].code, :size => '20', :maxlength => '255'
+          %td= select_tag "column_mappings[#{index}][name]", options_for_select(APP_CONFIG['column_mappings'].sort { |a,b| a.downcase <=> b.downcase }, @column_mappings[index].name), :include_blank => true
+          -#%td= text_field "column_mappings[#{index}]", :name, :value => @column_mappings[index].name
     .form-actions
       .actions-pre
         = cancel_button 'Cancel', column_mappings_path
       .actions
         = submit_tag "Submit Column Mappings"
-
-
-:javascript
-  $("#addColumnMapping").on('click', function(){
-    var last_index = $("#mapping").find("tr")
-    $.ajax({
-      url: '/column_mappings/render_field',
-      type: 'get',
-      async: false,
-      dataType: 'text',
-      data: {},
-      success: function(data){
-        console.log(data);
-      }
-    });
-    $("#mappings").append("");
-  });
