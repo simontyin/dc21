@@ -16,24 +16,45 @@ class CartItemsController < ApplicationController
   end
 
   def add_single
-    data_file = DataFile.find(params[:id])
+    session[:return_to] = request.referer
+    id = params[:id] || params[:data_file_ids]
+    data_file = DataFile.find(id)
     current_cart_items = cart_items.collect(&:id)
-    if data_file.is_complete?
-      if !current_cart_items.include? data_file.id
-        current_user.cart_items << data_file
-        partial = render_to_string :partial => "layouts/notice", :locals => {:msg => 'File was successfully added to cart.'}
-        data = {:notice => partial, :status => 200}
-        render :json => data.to_json
+
+    respond_to do |format|
+      if data_file.is_complete? or !data_file.is_package?
+        if !current_cart_items.include? data_file.id
+          current_user.cart_items << data_file
+          format.html {
+            redirect_to session[:return_to]||data_files_path, notice: 'File was successfully added to cart.'
+          }
+          format.js {
+            partial = render_to_string :partial => "layouts/notice", :locals => {:msg => 'File was successfully added to cart.'}
+            data = {:notice => partial, :status => 200}
+            render :json => data.to_json
+          }
+        else
+          format.html {
+            redirect_to session[:return_to]||data_files_path, notice: 'File could not be added: It may already exist in your cart.'
+          }
+          format.js {
+            partial = render_to_string :partial => "layouts/notice", :locals => {:msg => 'File could not be added: It may already exist in your cart.'}
+            data = {:notice => partial, :status => 422}
+            render :json => data.to_json
+          }
+        end
       else
-        partial = render_to_string :partial => "layouts/notice", :locals => {:msg => 'File could not be added: It may already exist in your cart.'}
-        data = {:notice => partial, :status => 422}
-        render :json => data.to_json
+        format.html {
+          redirect_to session[:return_to]||data_files_path, notice: 'File could not be added: The package is not complete.'
+        }
+        format.js {
+          partial = render_to_string :partial => "layouts/notice", :locals => {:msg => 'File could not be added: The package is not complete.'}
+          data = {:notice => partial, :status => 422}
+          render :json => data.to_json
+        }
       end
-    else
-      partial = render_to_string :partial => "layouts/notice", :locals => {:msg => 'File could not be added: The package is not complete.'}
-      data = {:notice => partial, :status => 422}
-      render :json => data.to_json
     end
+
   end
 
   def add_all

@@ -84,7 +84,9 @@ $(function () {
         data: {id: id, file_size: file_size},
         success: function(data){
           if (data.status == '200') {
-            $("#add_cart_item_" + id).addClass("disabled");
+            var link_identifier = "#add_cart_item_" + id;
+            $(link_identifier).addClass("disabled");
+            $(link_identifier).attr('id', "add_cart_item_disabled");
             incrementCartCount(file_size);
             renderNotice(data.notice);
             $("#drop3").attr("data-toggle", "dropdown");
@@ -104,7 +106,10 @@ $(function () {
     cartCount++;
     $("#drop3").attr('total_items', cartCount);
     window.cart_size += parseInt(file_size, 10);
-    $("#drop3").html("<b>"+ cartCount + " File in Cart</b> " + "( " + bytesToSize(window.cart_size) + " )" + " <span class=\"caret\"></span>");
+    if (cartCount == 1)
+      $("#drop3").html("<b>"+ cartCount + " File in Cart</b> " + "( " + bytesToSize(window.cart_size) + " )" + " <span class=\"caret\"></span>");
+    else
+      $("#drop3").html("<b>"+ cartCount + " Files in Cart</b> " + "( " + bytesToSize(window.cart_size) + " )" + " <span class=\"caret\"></span>");
   }
 
   function renderNotice(html){
