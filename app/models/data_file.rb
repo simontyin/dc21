@@ -55,7 +55,10 @@ class DataFile < ActiveRecord::Base
   before_save :fill_end_time_if_blank
   before_save :set_file_size_if_nil
 
+  scope :completed_items, where("transfer_status = ? or uuid IS NULL", PACKAGE_COMPLETE)
+  scope :count_unadded_items, find_by_sql("SELECT * FROM data_files WHERE transfer_status != 'COMPLETE'")
   scope :most_recent_first, order("created_at DESC")
+  scope :most_recent_first_and_completed_items, order("created_at DESC").where("transfer_status = ? OR uuid IS NULL", PACKAGE_COMPLETE)
   scope :earliest_start_time, order("start_time ASC").where("start_time IS NOT NULL")
   scope :latest_end_time, order("end_time DESC").where("end_time IS NOT NULL")
   # search scopes are using squeel - see http://erniemiller.org/projects/squeel/ for details of syntax
